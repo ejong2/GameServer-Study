@@ -1,83 +1,54 @@
-/* 이 코드는 뮤텍스를 사용하여 공유 데이터를 관리하는 방법을 보여주는 예제입니다.
-뮤텍스(mutex)는 상호배제(mutual exclusion) 원칙을 따르며, 이를 통해 멀티스레드 환경에서 공유 데이터를 안전하게 처리할 수 있습니다.
-RAII(Resource Acquisition Is Initialization) 기술을 사용하여 LockGuard 클래스를 정의하고, 이를 사용하여 Lock을 잠그고 해제합니다.
-이를 통해 뮤텍스 잠금 및 해제에 대한 예외 처리 및 메모리 누수와 같은 문제를 방지할 수 있습니다.
-*/
-
 #include "pch.h"
 #include <iostream>
 #include "CorePch.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include "AccountManager.h"
+#include "UserManager.h"
 
-// [1][2][3][4][][][][][][][][][][][]
-vector<int32> v;
-
-// Mutual Exclusive (상호베타적)
-mutex m;
-
-// RAII (Resources Acquisition Is Initialization)
-template<typename T>
-class LockGuard
+// 첫 번째 스레드 함수: Fun1
+// UserManager의 ProcessSave 함수를 한 번 호출합니다.
+void Fun1()
 {
-public:
-	LockGuard(T& m)
+	for (int32 i = 0; i < 1; i++)
 	{
-		_mutex = &m;
-		_mutex->lock();
+		UserManager::Instance()->ProcessSave();
 	}
+}
 
-	~LockGuard()
-	{
-		_mutex->unlock();
-	}
-private:
-	T* _mutex;
-};
-
-// Push 함수 : Lock을 걸고, 벡터에 값을 추가하는 함수
-void Push()
+// 두 번째 스레드 함수: Fun2
+// AccountManager의 ProcessLogin 함수를 한 번 호출합니다.
+void Fun2()
 {
-	for (int32 i = 0; i < 10000; i++)
+	for (int32 i = 0; i < 1; i++)
 	{
-		// 자물쇠 잠그기
-		//LockGuard<std::mutex> LockGuard(m);
-
-		std::lock_guard<std::mutex> LockGuard(m);
-
-		//std::unique_lock<std::mutex> uniqueLock(m, std::defer_lock);
-		//uniqueLock.lock();
-
-		//m.lock();
-		//m.lock();
-
-		v.push_back(i);
-
-		if (i == 5000)
-		{
-			//m.unlock();
-			break;
-		}
-
-		// 자물쇠 풀기
-		//m.unlock();
-		//m.unlock();
+		AccountManager::Instance()->ProcessLogin();
 	}
 }
 
 int main()
 {
-	// Push 함수를 스레드 t1과 t2에서 동시에 실행합니다.
-	std::thread t1(Push);
-	std::thread t2(Push);
+	// Fun1과 Fun2 함수를 각각 스레드 t1과 t2에서 동시에 실행합니다.
+	std::thread t1(Fun1);
+	std::thread t2(Fun2);
 
 	// 두 개의 스레드를 join()을 통해 메인 스레드와 동기화하여 각각의 스레드가 작업을 완료한 후 메인 스레드가 진행되도록 합니다.
-		t1.join();
+	t1.join();
 	t2.join();
 
-	// 최종적으로 계산된 벡터의 크기를 출력합니다.
-	cout << v.size() << '\n';
+	cout << "Jobs Done" << '\n';
 
-	return 0;
+	// 참고
+	mutex m1;
+	mutex m2;
+
+	// 두 개의 뮤텍스를 동시에 잠급니다.
+	std::lock(m1, m2); // m1.lock(); m2.lcok();
+
+	// adopt_lock : 이미 lock된 상태니까, 나중에 소멸될 때 풀어준다.
+	lock_guard<mutex> g1(m1, std::adopt_lock);
+	lock_guard<mutex> g2(m2, std::adopt_lock);
 }
+
+/* 이 코드는 데드락에 대한 예제입니다.UserManager와 AccountManager에서 lock_guard를 사용하여 각각의 뮤텍스를 잠그고 있습니다.여기서 두 스레드가 동시에 실행되어 서로 다른 뮤텍스를 잠그고, 상대방이 잠긴 뮤텍스를 기다리게 되면 데드락이 발생합니다.이를 해결하기 위해 std::lock 함수를 사용하여 두 개의 뮤텍스를 동시에 잠글 수 있고, std::adopt_lock을 사용하여 이미 lock된 뮤텍스를 lock_guard에 전달할 수 있습니다.이렇게 함으로써 데드락을 방지할 수 있습니다.*/
