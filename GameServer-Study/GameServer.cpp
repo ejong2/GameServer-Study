@@ -4,51 +4,97 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include "AccountManager.h"
-#include "UserManager.h"
 
-// 첫 번째 스레드 함수: Fun1
-// UserManager의 ProcessSave 함수를 한 번 호출합니다.
-void Fun1()
+// SpinLock 클래스를 정의합니다.
+class SpinLock
 {
-	for (int32 i = 0; i < 1; i++)
-	{
-		UserManager::Instance()->ProcessSave();
-	}
+public:
+    // lock 함수를 정의합니다.
+    void lock()
+    {
+        // CAS (Compare-And-Swap)
+        bool expected = false;
+        bool desired = true;
+
+        // CAS 의사 코드
+        /*if (_locked == expected)
+        {
+            expected = _locked;
+            _locked = desired;
+            return true;
+        }
+        else
+        {
+            expected = _locked;
+            return false;
+        }*/
+
+        // compare_exchange_strong 메서드를 사용하여 _locked 변수의 값을 안전하게 변경합니다.
+        while (_locked.compare_exchange_strong(expected, desired) == false)
+        {
+            expected = false;
+        }
+
+        // _locked = true;
+    }
+
+    // unlock 함수를 정의합니다.
+    void unlock()
+    {
+        // _locked = false;
+        _locked.store(false);
+    }
+
+private:
+    // atomic<bool> 타입의 _locked 변수를 선언합니다.
+    std::atomic<bool> _locked = false;
+};
+
+int32 sum = 0;
+std::mutex m;
+SpinLock spinLock;
+
+// Add 함수를 정의합니다. sum 값을 증가시키는 작업을 수행합니다.
+void Add()
+{
+    for (int32 i = 0; i < 10'0000; i++)
+    {
+        std::lock_guard<SpinLock> guard(spinLock);
+        sum++;
+    }
 }
 
-// 두 번째 스레드 함수: Fun2
-// AccountManager의 ProcessLogin 함수를 한 번 호출합니다.
-void Fun2()
+// Sub 함수를 정의합니다. sum 값을 감소시키는 작업을 수행합니다.
+void Sub()
 {
-	for (int32 i = 0; i < 1; i++)
-	{
-		AccountManager::Instance()->ProcessLogin();
-	}
+    for (int32 i = 0; i < 10'0000; i++)
+    {
+        std::lock_guard<SpinLock> guard(spinLock);
+        sum--;
+    }
 }
 
 int main()
 {
-	// Fun1과 Fun2 함수를 각각 스레드 t1과 t2에서 동시에 실행합니다.
-	std::thread t1(Fun1);
-	std::thread t2(Fun2);
+    // volatile 변수 flag를 선언하고 초기화합니다.
+    // -> 컴파일러 최적화로 인한 문제를 방지하기 위해 volatile 키워드를 사용합니다.
 
-	// 두 개의 스레드를 join()을 통해 메인 스레드와 동기화하여 각각의 스레드가 작업을 완료한 후 메인 스레드가 진행되도록 합니다.
-	t1.join();
-	t2.join();
+    /*volatile bool flag = true;
+    while (flag)
+    {
 
-	cout << "Jobs Done" << '\n';
+    }*/
 
-	// 참고
-	mutex m1;
-	mutex m2;
+    // Add()와 Sub() 함수를 각각 스레드 t1과 t2에서 실행합니다.
+    std::thread t1(Add);
+    std::thread t2(Sub);
 
-	// 두 개의 뮤텍스를 동시에 잠급니다.
-	std::lock(m1, m2); // m1.lock(); m2.lcok();
+    // 스레드 t1과 t2를 join()을 통해 메인 스레드와 동기화합니다.
+    t1.join();
+    t2.join();
 
-	// adopt_lock : 이미 lock된 상태니까, 나중에 소멸될 때 풀어준다.
-	lock_guard<mutex> g1(m1, std::adopt_lock);
-	lock_guard<mutex> g2(m2, std::adopt_lock);
+    // 최종적으로 계산된 sum 값을 출력합니다.
+    std::cout << sum << '\n';
 }
 
-/* 이 코드는 데드락에 대한 예제입니다.UserManager와 AccountManager에서 lock_guard를 사용하여 각각의 뮤텍스를 잠그고 있습니다.여기서 두 스레드가 동시에 실행되어 서로 다른 뮤텍스를 잠그고, 상대방이 잠긴 뮤텍스를 기다리게 되면 데드락이 발생합니다.이를 해결하기 위해 std::lock 함수를 사용하여 두 개의 뮤텍스를 동시에 잠글 수 있고, std::adopt_lock을 사용하여 이미 lock된 뮤텍스를 lock_guard에 전달할 수 있습니다.이렇게 함으로써 데드락을 방지할 수 있습니다.*/
+/* 이 코드에서는 SpinLock 클래스를 사용하여 멀티스레드 환경에서 공유 데이터를 안전하게 처리하는 방법을 보여줍니다.compare_exchange_strong 메서드를 사용하여 원자적으로 값을 변경하고, 이를 통해 경쟁 조건(race condition)을 방지합니다.주의할 점은 SpinLock이 고성능이긴 하지만, 스레드가 계속해서 CPU를 사용하므로 CPU 사용률이 높아질 수 있습니다. */
