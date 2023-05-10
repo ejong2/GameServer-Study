@@ -4,57 +4,71 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include <future>
 #include <windows.h>
+#include <future>
 
-// 2차원 배열을 사용하여 캐시에 대한 속도 차이를 확인하는 코드입니다.
-int32 buffer[10000][10000];
+// 가시성, 코드 재배치
+int32 x = 0;
+int32 y = 0;
+int32 r1 = 0;
+int32 r2 = 0;
+
+volatile bool ready;
+
+// Thread_1 함수에서는 변수 y에 1을 할당하고, r1에 변수 x의 값을 할당합니다.
+void Thread_1()
+{
+	while (!ready)
+		;
+
+	y = 1;
+	r1 = x;
+}
+
+// Thread_2 함수에서는 변수 x에 1을 할당하고, r2에 변수 y의 값을 할당합니다.
+void Thread_2()
+{
+	while (!ready)
+		;
+
+
+	x = 1;
+	r2 = y;
+}
 
 int main()
 {
-    memset(buffer, 0, sizeof(buffer));
+	int32 count = 0;
 
-    // 행 우선 순회 방식으로 배열을 순회하며 합을 구합니다.
-    // 이 방식은 캐시 메모리의 공간 지역성(Spatial Locality) 원리에 따라
-    // 배열이 메모리에 연속적으로 저장되므로 캐시 효율성이 높습니다.
-    {
-        uint64 start = GetTickCount64(); // 시작 시간 기록
+	while (true)
+	{
+		ready = false;
 
-        int64 sum = 0;
+		count++;
 
-        for (int32 i = 0; i < 10000; i++)
-        {
-            for (int32 j = 0; j < 10000; j++)
-            {
-                sum += buffer[i][j];
-            }
-        }
+		x = y = r1 = r2 = 0;
 
-        uint64 end = GetTickCount64(); // 종료 시간 기록
-        cout << "Elapsed Tick " << (end - start) << '\n'; // 경과 시간 출력
-    }
+		// Thread_1과 Thread_2를 실행합니다.
+		thread t1(Thread_1);
+		thread t2(Thread_2);
 
-    // 열 우선 순회 방식으로 배열을 순회하며 합을 구합니다.
-    // 이 방식은 캐시 메모리의 공간 지역성 원리에 부합하지 않아
-    // 캐시 미스가 더 자주 발생하며, 따라서 속도가 느려집니다.
-    {
-        uint64 start = GetTickCount64(); // 시작 시간 기록
+		ready = true;
 
-        int64 sum = 0;
-        for (int32 i = 0; i < 10000; i++)
-        {
-            for (int32 j = 0; j < 10000; j++)
-            {
-                sum += buffer[j][i];
-            }
-        }
+		t1.join();
+		t2.join();
 
-        uint64 end = GetTickCount64(); // 종료 시간 기록
-        cout << "Elapsed Tick " << (end - start) << '\n'; // 경과 시간 출력
-    }
+		// r1과 r2 모두 0인 경우, 즉 CPU 파이프라인의 최적화로 인한 메모리 순서 재배치가 발생한 경우를 확인합니다.
+		if (r1 == 0 && r2 == 0)
+		{
+			break;
+		}
+	}
+
+	// 해당 상황이 발생한 횟수를 출력합니다.
+	cout << count << " 번만에 빠져나옴." << '\n';
 }
 
-/* 이 코드에서 행 우선 방식이 더 빠른 이유는 캐시 메모리의 공간 지역성(Spatial Locality) 원리 때문입니다.
-공간 지역성 원리는 프로그램이 메모리에 인접한 위치에 있는 데이터를 참조할 확률이 높다는 것을 의미합니다.
-행 우선 방식은 메모리에 연속적으로 저장된 데이터를 순차적으로 접근하기 때문에 캐시 효율성이 높습니다.
-반면, 열 우선 방식은 메모리 접근이 불연속적이므로 캐시 미스가 더 자주 발생하고 속도가 느려집니다. */
+/* 이 코드는 CPU 파이프라인 최적화로 인해 메모리 순서가 재배치되는 상황을 보여줍니다.
+코드에서 두 스레드가 동시에 실행되는데, 각 스레드에서 서로 다른 변수에 1을 할당하고,
+서로 반대 변수의 값을 읽어옵니다. 이상적인 상황에서는 r1과 r2가 동시에 0이 될 수 없습니다.
+하지만 CPU 파이프라인 최적화로 인해 메모리 순서가 재배치되어 의도치 않은 결과가 발생할 수 있습니다. 이를 통해 파이프라인 최적화의 영향을 확인할 수 있습니다. */
