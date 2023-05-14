@@ -29,9 +29,11 @@ void Pop()
 {
     while (true)
     {
-        int32 data = 0;
-        if (s.TryPop(OUT data))
-            cout << data << '\n';
+        auto data = s.TryPop();
+        if (data != nullptr)
+        {
+            cout << (*data) << '\n';
+        }
     }
 }
 
@@ -40,7 +42,6 @@ int main()
     thread t1(Push);
     thread t2(Pop);
     thread t3(Pop);
-
 
     t1.join();
     t2.join();
