@@ -1,8 +1,54 @@
 #pragma once
 
+#include <mutex>
+
 template<typename T>
 class LockStack
 {
+public:
+	LockStack() {}
+
+	// 복사 생성자와 대입 연산자를 삭제하여 LockStack 객체가 복사되지 않도록 합니다.
+	LockStack(const LockStack&) = delete;
+	LockStack& operator =(const LockStack&) = delete;
+
+	// 스택에 값을 추가하는 Push 함수입니다. 뮤텍스를 사용하여 동시성을 보장합니다.
+	void Push(T value)
+	{
+		lock_guard<mutex> lock(_mutex);
+		_stack.push(std::move(value));
+		_condVar.notify_one();
+	}
+
+	// 스택에서 값을 꺼내오는 TryPop 함수입니다. 뮤텍스를 사용하여 동시성을 보장합니다.
+	bool TryPop(T& value)
+	{
+		lock_guard<mutex> lock(_mutex);
+		if (_stack.empty())
+		{
+			return false;
+		}
+
+		// 비어있지 않다면 값을 가져옵니다.
+		value = std::move(_stack.top());
+		_stack.pop();
+
+		return true;
+	}
+
+	// 값을 가져올 때까지 대기하는 WaitPop 함수입니다.
+	void WaitPop(T& value)
+	{
+		unique_lock<mutex> lock(_mutex);
+		_condVar.wait(lock, [this] { return _stack.empty() == false; });
+		value = std::move(_stack.top());
+		_stack.pop();
+	}
+
+private:
+	stack<T> _stack; // 스택 객체
+	mutex _mutex; // 동시성을 보장하기 위한 뮤텍스 객체
+	condition_variable _condVar; // 대기 상태를 관리하기 위한 condition_variable 객체
 };
 
 template<typename T>

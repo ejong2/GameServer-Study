@@ -11,7 +11,7 @@
 
 // 멀티스레드 환경에서 사용할 수 있는 LockQueue, LockStack 객체 생성
 
-//LockQueue<int32> q;
+LockFreeQueue<int32> q;
 LockFreeStack<int32> s;
 
 void Push()
@@ -19,7 +19,7 @@ void Push()
     while (true)
     {
         int32 value = rand() % 100;
-        s.Push(value);
+        q.Push(value);
 
         //this_thread::sleep_for(10ms);
     }
@@ -29,7 +29,7 @@ void Pop()
 {
     while (true)
     {
-        auto data = s.TryPop();
+        auto data = q.TryPop();
         if (data != nullptr)
         {
             cout << (*data) << '\n';
