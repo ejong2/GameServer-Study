@@ -39,6 +39,11 @@
     <ClInclude Include="Lock.h">
       <Filter>Thread</Filter>
     </ClInclude>
+    <ClInclude Include="DeadLockProfiler.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="AccountManager.h" />
+    <ClInclude Include="PlayerManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CorePch.cpp">
@@ -59,5 +64,10 @@
     <ClCompile Include="Lock.cpp">
       <Filter>Thread</Filter>
     </ClCompile>
+    <ClCompile Include="DeadLockProfiler.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountManager.cpp" />
+    <ClCompile Include="PlayerManager.cpp" />
   </ItemGroup>
 </Project>

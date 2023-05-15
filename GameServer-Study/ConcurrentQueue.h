@@ -11,11 +11,11 @@ class LockQueue
 public:
     LockQueue() {}
 
-    // º¹»ç »ý¼ºÀÚ¿Í ´ëÀÔ ¿¬»êÀÚ¸¦ »èÁ¦ÇÏ¿© LockQueue °´Ã¼°¡ º¹»çµÇÁö ¾Êµµ·Ï ÇÕ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ LockQueue ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Êµï¿½ï¿½ï¿½ ï¿½Õ´Ï´ï¿½.
     LockQueue(const LockQueue&) = delete;
     LockQueue& operator=(const LockQueue&) = delete;
 
-    // Å¥¿¡ °ªÀ» Ãß°¡ÇÏ´Â Push ÇÔ¼öÀÔ´Ï´Ù. ¹ÂÅØ½º¸¦ »ç¿ëÇÏ¿© µ¿½Ã¼ºÀ» º¸ÀåÇÕ´Ï´Ù.
+    // Å¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ï´ï¿½ Push ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½. ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     void Push(T value)
     {
         lock_guard<mutex> lock(_mutex);
@@ -23,7 +23,7 @@ public:
         _condVar.notify_one();
     }
 
-    // Å¥¿¡¼­ °ªÀ» ²¨³»¿À´Â TryPop ÇÔ¼öÀÔ´Ï´Ù. ¹ÂÅØ½º¸¦ »ç¿ëÇÏ¿© µ¿½Ã¼ºÀ» º¸ÀåÇÕ´Ï´Ù.
+    // Å¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ TryPop ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½. ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     bool TryPop(T& value)
     {
         lock_guard<mutex> lock(_mutex);
@@ -32,14 +32,14 @@ public:
             return false;
         }
 
-        // ºñ¾îÀÖÁö ¾Ê´Ù¸é °ªÀ» °¡Á®¿É´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É´Ï´ï¿½.
         value = std::move(_queue.front());
         _queue.pop();
 
         return true;
     }
 
-    // °ªÀ» °¡Á®¿Ã ¶§±îÁö ´ë±âÇÏ´Â WaitPop ÇÔ¼öÀÔ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ WaitPop ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
     void WaitPop(T& value)
     {
         unique_lock<mutex> lock(_mutex);
@@ -49,9 +49,9 @@ public:
     }
 
 private:
-    queue<T> _queue; // Å¥ °´Ã¼
-    mutex _mutex; // µ¿½Ã¼ºÀ» º¸ÀåÇÏ±â À§ÇÑ ¹ÂÅØ½º °´Ã¼
-    condition_variable _condVar; // ´ë±â »óÅÂ¸¦ °ü¸®ÇÏ±â À§ÇÑ condition_variable °´Ã¼
+    queue<T> _queue; // Å¥ ï¿½ï¿½Ã¼
+    mutex _mutex; // ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½Ã¼
+    condition_variable _condVar; // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ condition_variable ï¿½ï¿½Ã¼
 };
 
 //template<typename T>
@@ -115,27 +115,27 @@ private:
 template<typename T>
 class LockFreeQueue
 {
-    // ³ëµå ±¸Á¶Ã¼¸¦ ¼±¾ðÇÕ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     struct Node;
 
-    // ¿ÜºÎ¿¡¼­ Ä«¿îÆ®ÇÏ´Â ÂüÁ¶ °³¼ö¿Í ³ëµå Æ÷ÀÎÅÍ¸¦ ÀúÀåÇÏ´Â ±¸Á¶Ã¼¸¦ ¼±¾ðÇÕ´Ï´Ù.
+    // ï¿½ÜºÎ¿ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ®ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     struct CountedNodePtr
     {
-        int32 externalCount; // ÂüÁ¶±Ç
+        int32 externalCount; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Node* ptr = nullptr;
     };
 
-    // ³ëµå Ä«¿îÅÍ ±¸Á¶Ã¼¸¦ ¼±¾ðÇÕ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     struct NodeCounter
     {
-        uint32 internalCount : 30; // ÂüÁ¶±Ç ¹ÝÈ¯ °ü·Ã
-        uint32 externalCountRemaining : 2; // Push & Pop ´ÙÁß ÂüÁ¶±Ç °ü·Ã
+        uint32 internalCount : 30; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½
+        uint32 externalCountRemaining : 2; // Push & Pop ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     };
 
-    // ³ëµå ±¸Á¶Ã¼¸¦ ¼±¾ðÇÕ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     struct Node
     {
-        // ³ëµå »ý¼ºÀÚÀÔ´Ï´Ù. Ä«¿îÅÍ °ªÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
+        // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½. Ä«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ï¿½Õ´Ï´ï¿½.
         Node()
         {
             NodeCounter newCount;
@@ -147,7 +147,7 @@ class LockFreeQueue
             next.externalCount = 0;
         }
 
-        // ³ëµåÀÇ ÂüÁ¶ °³¼ö¸¦ °¨¼Ò½ÃÅ°´Â ÇÔ¼öÀÔ´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ò½ï¿½Å°ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
         void ReleaseRef()
         {
             NodeCounter oldCounter = count.load();
@@ -157,7 +157,7 @@ class LockFreeQueue
                 NodeCounter newCounter = oldCounter;
                 newCounter.internalCount--;
 
-                // ³¢¾îµé ¼ö ÀÖÀ½
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 if (count.compare_exchange_strong(oldCounter, newCounter))
                 {
                     if (newCounter.internalCount == 0 && newCounter.externalCountRemaining == 0)
@@ -173,7 +173,7 @@ class LockFreeQueue
         CountedNodePtr next;
     };
 public:
-    // ¶ôÇÁ¸® Å¥ »ý¼ºÀÚÀÔ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¥ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
     LockFreeQueue()
     {
         CountedNodePtr node;
@@ -185,11 +185,11 @@ public:
         _tail.store(node);
     }
 
-    // º¹»ç »ý¼ºÀÚ¿Í ´ëÀÔ ¿¬»êÀÚ¸¦ »èÁ¦ÇÕ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     LockFreeQueue(const LockFreeQueue&) = delete;
     LockFreeQueue& operator=(const LockFreeQueue&) = delete;
 
-    // °ªÀ» ¶ôÇÁ¸® Å¥¿¡ Ãß°¡ÇÏ´Â ÇÔ¼öÀÔ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¥ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
     void Push(const T& value)
     {
         unique_ptr<T> newData = make_unique<T>(value);
@@ -202,10 +202,10 @@ public:
 
         while (true)
         {
-            // ÂüÁ¶±Ç È¹µæ (externalCount¸¦ Çö½ÃÁ¡ ±âÁØ +1 ÇÑ ¾Ö°¡ ÀÌ±è)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¹ï¿½ï¿½ (externalCountï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ +1 ï¿½ï¿½ ï¿½Ö°ï¿½ ï¿½Ì±ï¿½)
             IncreaseExternalCount(_tail, oldTail);
 
-            // ¼ÒÀ¯±Ç È¹µæ (data¸¦ ¸ÕÀú ±³È¯ÇÑ ¾Ö°¡ ÀÌ±è)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¹ï¿½ï¿½ (dataï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ ï¿½Ö°ï¿½ ï¿½Ì±ï¿½)
             T* oldData = nullptr;
             if (oldTail.ptr->data.compare_exchange_strong(oldData, newData.get()))
             {
@@ -213,23 +213,23 @@ public:
                 oldTail = _tail.exchange(dummy);
                 FreeExternalCount(oldTail);
 
-                newData.release(); // µ¥ÀÌÅÍ¿¡ ´ëÇÑ unique_ptrÀÇ ¼ÒÀ¯±Ç Æ÷±â
+                newData.release(); // ï¿½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ï¿½ï¿½ï¿½ unique_ptrï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 break;
             }
 
-            // ¼ÒÀ¯±Ç °æÀï ÆÐ¹è..
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¹ï¿½..
             oldTail.ptr->ReleaseRef();
         }
     }
 
-    // ¶ôÇÁ¸® Å¥¿¡¼­ °ªÀ» ²¨³»·Á°í ½ÃµµÇÏ´Â ÇÔ¼öÀÔ´Ï´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
     shared_ptr<T> TryPop()
     {
         CountedNodePtr oldHead = _head.load();
 
         while (true)
         {
-            // ÂüÁ¶±Ç È¹µæ (externalCount¸¦ Çö½ÃÁ¡ ±âÁØ +1 ÇÑ ¾Ö°¡ ÀÌ±è)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¹ï¿½ï¿½ (externalCountï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ +1 ï¿½ï¿½ ï¿½Ö°ï¿½ ï¿½Ì±ï¿½)
             IncreaseExternalCount(_head, oldHead);
 
             Node* ptr = oldHead.ptr;
@@ -239,7 +239,7 @@ public:
                 return unique_ptr<T>();
             }
 
-            // ¼ÒÀ¯±Ç È¹µæ (head = ptr->next)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¹ï¿½ï¿½ (head = ptr->next)
             if (_head.compare_exchange_strong(oldHead, ptr->next))
             {
                 T* res = ptr->data.exchange(nullptr);
@@ -251,7 +251,7 @@ public:
         }
     }
 private:
-    // ¿ÜºÎ Ä«¿îÆ®¸¦ Áõ°¡½ÃÅ°´Â ÇÔ¼öÀÔ´Ï´Ù.
+    // ï¿½Üºï¿½ Ä«ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
     static void IncreaseExternalCount(atomic<CountedNodePtr>& counter, CountedNodePtr& oldCounter)
     {
         while (true)
@@ -268,7 +268,7 @@ private:
         }
     }
 
-    // ¿ÜºÎ Ä«¿îÆ®¸¦ ÇØÁ¦ÇÏ´Â ÇÔ¼öÀÔ´Ï´Ù.
+    // ï¿½Üºï¿½ Ä«ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ï¿½Ô´Ï´ï¿½.
     static void FreeExternalCount(CountedNodePtr& oldNodePtr)
     {
         Node* ptr = oldNodePtr.ptr;
