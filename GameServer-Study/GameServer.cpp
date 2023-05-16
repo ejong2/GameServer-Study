@@ -4,95 +4,76 @@
 #include <atomic>
 #include <mutex>
 #include <windows.h>
+#include <windows.h>
 #include <future>
 #include "ThreadManager.h"
 
 #include "RefCounting.h" // 참조 카운팅과 스마트 포인터 코드 포함
 
-// Wraight 클래스 정의. RefCountable을 상속받아 참조 카운팅을 사용함.
-class Wraight : public RefCountable
+// 참조 카운팅을 사용하는 Knight 클래스 정의
+class Knight : public RefCountable
 {
 public:
-    int _hp = 150; // 체력 값
-    int _posX = 0; // x 위치
-    int _posY = 0; // y 위치
-};
-
-// WraightRef라는 이름으로 Wraight 객체에 대한 스마트 포인터 타입 정의
-using WraightRef = TSharedPtr<Wraight>;
-
-// Missile 클래스 정의. RefCountable을 상속받아 참조 카운팅을 사용함.
-class Missile : public RefCountable
-{
-public:
-    void SetTarget(WraightRef target) // 타겟 설정 함수
+    // 생성자에서 메시지 출력
+    Knight()
     {
-        _target = target;
+        cout << "Kngiht()" << endl;
     }
 
-
-    bool Update()  // 미사일 업데이트 함수
+    // 소멸자에서 메시지 출력
+    ~Knight()
     {
-        if (_target == nullptr)  // 타겟이 없다면 종료
-            return true;
-
-        int posX = _target->_posX;  // 타겟의 x 위치
-        int posY = _target->_posY;  // 타겟의 y 위치
-
-        // TODO : 쫓아간다
-
-        if (_target->_hp == 0)  // 타겟의 체력이 0이라면 타겟을 없애고 종료
-        {
-            _target = nullptr;
-            return true;
-        }
-
-        return false;  // 미사일이 아직 타겟을 추적 중
+        cout << "~Knight()" << endl;
     }
-
-    WraightRef _target = nullptr;  // 타겟에 대한 스마트 포인터
 };
-
-// MissileRef라는 이름으로 Missile 객체에 대한 스마트 포인터 타입 정의
-using MissileRef = TSharedPtr<Missile>;
 
 int main()
 {
-    WraightRef wraight(new Wraight()); // Wraight 객체 생성
-    wraight->ReleaseRef(); // Wraight 객체에 대한 참조 해제
-    MissileRef missile(new Missile()); // Missile 객체 생성
-    missile->ReleaseRef(); // Missile 객체에 대한 참조 해제
+    // 1) 이미 만들어진 클래스 대상으로 사용 불가  
+    // 2) 순환 (Cycle) 문제
 
+    /*
+    unique_ptr<Knight> k2 = make_unique<Knight>();
+    unique_ptr<Knight> k3 = std::move(k2);
 
-    missile->SetTarget(wraight);  // 미사일의 타겟을 Wraight 객체로 설정
+    -> unique_ptr : 복사 X
+    */
 
-    // 레이스가 피격 당함
-    wraight->_hp = 0;  // Wraight 객체의 체력을 0으로 설정
-    wraight = nullptr;  // Wraight 스마트 포인터를 nullptr로 설정
+    // shared_ptr와 weak_ptr 사용 예제
 
-    while (true)  // 무한 루프
+    // [Knight | RefCountingBlock(uses, weak)]
+
+    // [T*][RefCountBlocking*]
+    //shared_ptr<Knight> spr(new Knight());
+
+    // Knight 객체를 가리키는 shared_ptr 생성
+    // 이때 RefCountBlock에서 useCount(shared)와 weakCount가 함께 증가합니다.
+    shared_ptr<Knight> spr = make_shared<Knight>();
+
+    // spr이 가리키는 객체에 대한 weak_ptr 생성
+    // weak_ptr은 소유하지 않지만, 객체의 생존 여부를 알 수 있습니다.
+    weak_ptr<Knight> wpr = spr;
+
+    // wpr이 가리키는 객체가 소멸했는지 확인
+    // 소멸했다면 true, 아니라면 false를 반환합니다.
+    bool expired = wpr.expired();
+
+    // wpr이 가리키는 객체에 대한 shared_ptr을 생성
+    // 만약 해당 객체가 이미 소멸되었다면, nullptr을 반환합니다.
+    shared_ptr<Knight> spr2 = wpr.lock();
+
+    // spr2가 nullptr이 아닌지 확인
+    // nullptr이 아니라면, wpr이 가리키는 객체는 아직 살아있습니다.
+    if (spr2 != nullptr)
     {
-        if (missile)
-        {
-            if (missile->Update())  // 미사일 업데이트, 종료 조건이 만족되면 미사일 참조를 nullptr로 설정
-            {
-                missile = nullptr;
-            }
-        }
+
     }
-
-    // 미사일 참조를 nullptr로 설정
-    missile = nullptr;
-
-    // 프로그램 종료
-    return 0;
 }
 
-/*------------------------------------------------------------------------------
-위의 코드는 'Wraight'와 'Missile'이라는 두 개의 클래스를 생성하고,
-각 클래스는 'RefCountable'을 상속받아 참조 카운팅 기능을 활용합니다.
-'TSharedPtr'은 스마트 포인터로서, 생성한 객체에 대한 참조를 관리합니다.
-'Wraight' 객체를 타겟으로 하는 'Missile' 객체가 생성되며,
-무한 루프 내에서 미사일의 'Update' 함수가 호출됩니다.
-이 함수 내에서 타겟의 체력이 0이 되면 미사일의 참조를 해제하고 루프를 종료합니다.
---------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------
+위의 코드는 shared_ptr와 weak_ptr의 사용 예제를 보여줍니다.
+shared_ptr은 객체에 대한 공유 소유권을 제공하며, 참조 카운팅을 통해 객체의 수명을 관리합니다.
+weak_ptr은 객체에 대한 약한 참조를 제공하며,
+객체의 수명에 영향을 주지 않지만 해당 객체가 아직 존재하는지 확인할 수 있습니다.
+이를 통해 순환 참조 문제를 해결할 수 있습니다.
+--------------------------------------------------------------------------------------------*/
