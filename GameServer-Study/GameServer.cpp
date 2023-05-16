@@ -7,66 +7,92 @@
 #include <future>
 #include "ThreadManager.h"
 
-#include <vector>
-#include <thread>
+#include "RefCounting.h" // 참조 카운팅과 스마트 포인터 코드 포함
 
-// 소수를 판별하는 함수
-bool isPrime(int number)
+// Wraight 클래스 정의. RefCountable을 상속받아 참조 카운팅을 사용함.
+class Wraight : public RefCountable
 {
-	if (number <= 1)  // 1 이하의 수는 소수가 아니다.
-		return false;
-	if (number == 2 || number == 3)  // 2와 3은 소수다.
-		return true;
+public:
+    int _hp = 150; // 체력 값
+    int _posX = 0; // x 위치
+    int _posY = 0; // y 위치
+};
 
-	// 2부터 number-1까지로 나누어 떨어지는지 확인한다.
-	for (int i = 2; i < number; i++)
-	{
-		if ((number % i) == 0)  // 나누어 떨어지면 소수가 아니다.
-			return false;
-	}
-	return true;  // 나누어 떨어지는 수가 없다면 소수다.
-}
+// WraightRef라는 이름으로 Wraight 객체에 대한 스마트 포인터 타입 정의
+using WraightRef = TSharedPtr<Wraight>;
 
-// 주어진 범위 내의 소수 개수를 계산하는 함수
-int CountPrime(int start, int end)
+// Missile 클래스 정의. RefCountable을 상속받아 참조 카운팅을 사용함.
+class Missile : public RefCountable
 {
-	int count = 0;
+public:
+    void SetTarget(WraightRef target) // 타겟 설정 함수
+    {
+        _target = target;
+    }
 
-	// start부터 end까지의 숫자 중에서 소수인 숫자를 찾는다.
-	for (int number = start; number <= end; number++)
-	{
-		if (isPrime(number))  // 소수라면 카운트를 증가시킨다.
-			count++;
-	}
-	return count;
-}
+
+    bool Update()  // 미사일 업데이트 함수
+    {
+        if (_target == nullptr)  // 타겟이 없다면 종료
+            return true;
+
+        int posX = _target->_posX;  // 타겟의 x 위치
+        int posY = _target->_posY;  // 타겟의 y 위치
+
+        // TODO : 쫓아간다
+
+        if (_target->_hp == 0)  // 타겟의 체력이 0이라면 타겟을 없애고 종료
+        {
+            _target = nullptr;
+            return true;
+        }
+
+        return false;  // 미사일이 아직 타겟을 추적 중
+    }
+
+    WraightRef _target = nullptr;  // 타겟에 대한 스마트 포인터
+};
+
+// MissileRef라는 이름으로 Missile 객체에 대한 스마트 포인터 타입 정의
+using MissileRef = TSharedPtr<Missile>;
 
 int main()
 {
-	const int MAX_NUMBER = 100'0000;  // 최대 범위 설정
+    WraightRef wraight(new Wraight()); // Wraight 객체 생성
+    wraight->ReleaseRef(); // Wraight 객체에 대한 참조 해제
+    MissileRef missile(new Missile()); // Missile 객체 생성
+    missile->ReleaseRef(); // Missile 객체에 대한 참조 해제
 
-	vector<thread> threads;
 
-	int coreCount = thread::hardware_concurrency();  // 사용 가능한 CPU 코어 개수
-	int jobCount = (MAX_NUMBER / coreCount) + 1;  // 각 쓰레드가 처리할 작업 범위
+    missile->SetTarget(wraight);  // 미사일의 타겟을 Wraight 객체로 설정
 
-	atomic<int> primeCount = 0;  // 소수 개수를 담을 변수 (멀티스레드 환경에서 안전하게 동작하도록 atomic 타입 사용)
-	for (int i = 0; i < coreCount; i++)
-	{
-		int start = (i * jobCount) + 1;  // 각 쓰레드가 처리할 시작 번호
-		int end = min(MAX_NUMBER, ((i + 1) * jobCount));  // 각 쓰레드가 처리할 끝 번호
+    // 레이스가 피격 당함
+    wraight->_hp = 0;  // Wraight 객체의 체력을 0으로 설정
+    wraight = nullptr;  // Wraight 스마트 포인터를 nullptr로 설정
 
-		// 각 쓰레드에게 범위 내 소수 개수 계산 작업을 분배한다.
-		threads.push_back(thread([start, end, &primeCount]()
-			{
-				primeCount += CountPrime(start, end);  // 해당 범위의 소수 개수를 구해 primeCount에 더한다.
-			}));
-	}
+    while (true)  // 무한 루프
+    {
+        if (missile)
+        {
+            if (missile->Update())  // 미사일 업데이트, 종료 조건이 만족되면 미사일 참조를 nullptr로 설정
+            {
+                missile = nullptr;
+            }
+        }
+    }
 
-	// 모든 쓰레드가 작업을 마칠 때까지 대기한다.
-	for (thread& t : threads)
-		t.join();
+    // 미사일 참조를 nullptr로 설정
+    missile = nullptr;
 
-	// 최종 계산된 소수의 개수를 출력한다.
-	cout << primeCount << endl;
+    // 프로그램 종료
+    return 0;
 }
+
+/*------------------------------------------------------------------------------
+위의 코드는 'Wraight'와 'Missile'이라는 두 개의 클래스를 생성하고,
+각 클래스는 'RefCountable'을 상속받아 참조 카운팅 기능을 활용합니다.
+'TSharedPtr'은 스마트 포인터로서, 생성한 객체에 대한 참조를 관리합니다.
+'Wraight' 객체를 타겟으로 하는 'Missile' 객체가 생성되며,
+무한 루프 내에서 미사일의 'Update' 함수가 호출됩니다.
+이 함수 내에서 타겟의 체력이 0이 되면 미사일의 참조를 해제하고 루프를 종료합니다.
+--------------------------------------------------------------------------------*/
