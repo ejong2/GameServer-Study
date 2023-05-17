@@ -26,6 +26,19 @@
 // 첫 번째 Lock 객체에 대해 쓰기 잠금을 획득하는 매크로
 #define WRITE_LOCK              WRITE_LOCK_IDX(0)
 
+
+/*----------------
+      Memory
+-----------------*/
+
+//#ifdef _DEBUG
+//#define xalloc(size)		BaseAllocator::Alloc(size)
+//#define xrelease(ptr)		BaseAllocator::Release(ptr)
+//#else
+//#define xalloc(size)		BaseAllocator::Alloc(size)
+//#define xrelease(ptr)		BaseAllocator::Release(ptr)
+//#endif
+
 /*---------------------
          CRASH
 ----------------------*/
