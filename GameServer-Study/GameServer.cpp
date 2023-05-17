@@ -4,89 +4,46 @@
 #include <atomic>
 #include <mutex>
 #include <windows.h>
-#include <windows.h>
 #include <future>
 #include "ThreadManager.h"
 
-#include "RefCounting.h" // 참조 카운팅과 스마트 포인터 코드 포함
+#include "RefCounting.h"
 #include "Memory.h"
+#include "Allocator.h"
 
-class Player : public RefCountable
+class Player
 {
 public:
-
+	Player() {}
+	virtual ~Player() {}
 };
 
-// 참조 카운팅을 사용하는 Knight 클래스 정의
-class Knight : public RefCountable
+class Knight : public Player
 {
 public:
-    // 생성자에서 메시지 출력
-    Knight()
-    {
-        cout << "Kngiht()" << endl;
-    }
+	Knight()
+	{
+		cout << "Knight()" << endl;
+	}
 
-    Knight(int32 hp) : _hp(hp)
-    {
-        cout << "Knight(hp)" << endl;
-    }
+	Knight(int32 hp) : _hp(hp)
+	{
+		cout << "Knight(hp)" << endl;
+	}
 
-    // 소멸자에서 메시지 출력
-    ~Knight()
-    {
-        cout << "~Knight()" << endl;
-    }
+	~Knight()
+	{
+		cout << "~Knight()" << endl;
+	}
 
-    /*static void* operator new(size_t size)
-    {
-        cout << "new! " << size << endl;
-        void* ptr = ::malloc(size);
-        return ptr;
-    }
-
-    static void operator delete(void* ptr)
-    {
-        cout << "delete! " << endl;
-        ::free(ptr);
-    }*/
-
-    int32 _hp = 100;
-    int32 _mp = 100;
+	int32 _hp = 100;
+	int32 _mp = 10;
 };
-
-void* operator new(size_t size)
-{
-    cout << "new! " << size << endl;
-    void* ptr = ::malloc(size);
-    return ptr;
-}
-
-void operator delete(void* ptr)
-{
-    cout << "delete! " << endl;
-    ::free(ptr);
-}
-
-// new operator overloading ()Global
-void* operator new[](size_t size)
-{
-    cout << "new[]! " << size << endl;
-    void* ptr = ::malloc(size);
-    return ptr;
-}
-
-void operator delete[](void* ptr)
-{
-    cout << "delete![]" << endl;
-    ::free(ptr);
-}
 
 int main()
 {
-    Knight* knight = (Knight*)xnew<Player>();
+	Vector<Knight> v(100); // 사용자 정의 Allocator를 사용하는 Vector를 생성하고, Knight 객체 100개를 저장하는 공간을 할당합니다.
 
-    knight->_hp = 100;
-
-    xdelete(knight);
+	Map<int32, Knight> m; // 사용자 정의 Allocator를 사용하는 Map을 생성합니다.
+	m[100] = Knight(); // Map에 키 100에 대응하는 Knight 객체를 저장합니다.
 }
