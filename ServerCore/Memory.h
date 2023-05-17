@@ -6,7 +6,7 @@ template<typename Type, typename...Args>
 Type* xnew(Args&&... args)
 {
     // Type의 객체를 저장할 수 있는 메모리를 할당합니다.
-    Type* memory = static_cast<Type*>(BaseAllocator::Alloc(sizeof(Type)));
+    Type* memory = static_cast<Type*>(StompAllocator::Alloc(sizeof(Type)));
 
     // placement new를 이용하여 메모리에 Type의 객체를 생성합니다.
     new(memory)Type(forward<Args>(args)...);
@@ -20,5 +20,5 @@ void xdelete(Type* obj)
     // obj가 가리키는 객체의 소멸자를 호출합니다.
     obj->~Type();
     // 객체의 메모리를 해제합니다.
-    BaseAllocator::Release(obj);
+    StompAllocator::Release(obj);
 }

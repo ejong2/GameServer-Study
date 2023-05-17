@@ -11,6 +11,12 @@
 #include "RefCounting.h" // 참조 카운팅과 스마트 포인터 코드 포함
 #include "Memory.h"
 
+class Player : public RefCountable
+{
+public:
+
+};
+
 // 참조 카운팅을 사용하는 Knight 클래스 정의
 class Knight : public RefCountable
 {
@@ -78,7 +84,9 @@ void operator delete[](void* ptr)
 
 int main()
 {
-    Knight* knight = xnew<Knight>(100);
+    Knight* knight = (Knight*)xnew<Player>();
+
+    knight->_hp = 100;
 
     xdelete(knight);
 }
