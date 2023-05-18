@@ -1,10 +1,16 @@
 #pragma once
 
+enum
+{
+    SLIST_ALIGNMENT = 16
+};
+
 /*-----------------
     MemoryHeader
 ------------------*/
 
-struct MemoryHeader
+DECLSPEC_ALIGN(SLIST_ALIGNMENT)
+struct MemoryHeader : public SLIST_ENTRY
 {
     // [MemoryHeader][Data]
     MemoryHeader(int32 size) : allocSize(size) {} // 생성자입니다. 할당된 메모리 크기를 인자로 받습니다.
@@ -39,10 +45,9 @@ public:
     MemoryHeader* Pop(); // 메모리 풀에서 메모리를 꺼내는 함수입니다.
 
 private:
-    int32 _allocSize = 0; // 메모리 풀에서 관리하는 메모리 블록의 크기입니다.
-    atomic<int32> _allocCount = 0; // 현재 할당된 메모리 블록의 개수입니다.
+    SLIST_HEADER    _header;
+    int32           _allocSize = 0; // 메모리 풀에서 관리하는 메모리 블록의 크기입니다.
+    atomic<int32>   _allocCount = 0; // 현재 할당된 메모리 블록의 개수입니다.
 
-    USE_LOCK; // 동시성 제어를 위한 락을 선언합니다.
-    queue<MemoryHeader*> _queue; // 반환된 메모리 블록을 저장하는 큐입니다.
 };
 
