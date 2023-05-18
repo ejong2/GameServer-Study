@@ -42,8 +42,21 @@ public:
 
 int main()
 {
-	Vector<Knight> v(100); // 사용자 정의 Allocator를 사용하는 Vector를 생성하고, Knight 객체 100개를 저장하는 공간을 할당합니다.
+	for (int32 i = 0; i < 5; i++)
+	{
+		GThreadManager->Launch([]()
+			{
+				while (true)
+				{
+					Vector<Knight> v(10);
 
-	Map<int32, Knight> m; // 사용자 정의 Allocator를 사용하는 Map을 생성합니다.
-	m[100] = Knight(); // Map에 키 100에 대응하는 Knight 객체를 저장합니다.
+					Map<int32, Knight> m;
+					m[100] = Knight();
+
+					this_thread::sleep_for(10ms);
+				}
+			});
+	}
+
+	GThreadManager->Join();
 }
