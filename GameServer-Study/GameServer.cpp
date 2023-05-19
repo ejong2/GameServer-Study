@@ -63,7 +63,32 @@ int main()
 		cout << "Client Connected! IP = " << ipAddress << endl; // 연결된 클라이언트의 IP 주소 출력
 
 		// TODO: 클라이언트와 데이터 통신 코드를 여기에 작성
-	}
+		while (true)
+		{
+			char recvBuffer[1000]; // 수신된 데이터를 저장할 버퍼
 
+			this_thread::sleep_for(1s); // 현재 스레드를 1초 동안 중지
+
+			int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0); // 클라이언트로부터 데이터 수신
+			if (recvLen <= 0) // 수신된 데이터가 없거나 오류가 발생한 경우
+			{
+				int32 errCode = ::WSAGetLastError(); // 에러 코드 추출
+				cout << "Recv ErrorCode : " << errCode << endl;
+				return 0;
+			}
+
+			cout << "Recv Data! Data = " << recvBuffer << endl; // 수신된 데이터 출력
+			cout << "Recv Data! Len = " << recvLen << endl; // 수신된 데이터의 길이 출력
+
+			/* 주석 처리된 코드는 클라이언트로 데이터를 전송하는 코드로, 필요 시 주석 해제 후 사용 가능
+			int32 resultCode = ::send(clientSocket, recvBuffer, recvLen, 0); // 클라이언트에 데이터 전송
+			if (resultCode == SOCKET_ERROR) // 데이터 전송 오류 시
+			{
+				int32 errCode = ::WSAGetLastError(); // 에러 코드 추출
+				cout << "Send ErrorCode : " << errCode << endl;
+				return 0;
+			}*/
+		}
+	}
 	::WSACleanup(); // 윈속 종료
 }
