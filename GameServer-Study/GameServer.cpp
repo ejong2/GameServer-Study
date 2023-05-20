@@ -26,52 +26,95 @@ int main()
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return 0;
 
-    // UDP 소켓 생성. 실패하면 에러 메시지 출력 후 프로그램 종료
-    SOCKET serverSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
-    if (serverSocket == INVALID_SOCKET)
-    {
-        HandleError("Socket");
+    // 논블로킹(Non-Blocking)
+    
+    SOCKET listenSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (listenSocket == INVALID_SOCKET)
         return 0;
-    }
 
-    // SO_KEEPALIVE: 이 옵션을 설정하면 TCP 연결의 상태가 주기적으로 확인됩니다.
-    // 예를 들어, 만약 상대방이 연결을 소리소문 없이 끊었다면 이 옵션을 통해 감지할 수 있습니다.
-    bool enable = true;
-    ::setsockopt(serverSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&enable, sizeof(enable));
+    // 서버 소켓을 논-블로킹 모드로 설정
+    // 논-블로킹 모드에서는 소켓 함수 호출이 즉시 완료되지 않으면 WSAEWOULDBLOCK 에러를 반환합니다.
+    // 이를 통해 프로그램은 네트워크 연산을 기다리지 않고 다른 작업을 계속 수행할 수 있습니다.
+    u_long on = 1;
+    if (::ioctlsocket(listenSocket, FIONBIO, &on) == INVALID_SOCKET)
+        return 0;
 
-    // SO_LINGER: 이 옵션은 소켓을 닫을 때 아직 전송되지 않은 데이터가 있는 경우 어떻게 처리할지를 결정합니다.
-    // linger.l_onoff 가 0이면 closesocket()이 바로 리턴하고, 아니면 linger.l_linger 초 만큼 대기합니다. 
-    LINGER linger;
-    linger.l_onoff = 1;
-    linger.l_linger = 5;
-    ::setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(linger));
+    SOCKADDR_IN serverAddr;
+    ::memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = ::htonl(INADDR_ANY);
+    serverAddr.sin_port = ::htons(7777);
 
-    // SO_SNDBUF 및 SO_RCVBUF: 이들 옵션은 송신 및 수신 버퍼의 크기를 설정합니다.
-    int32 sendBufferSize;
-    int32 optionLen = sizeof(sendBufferSize);
-    ::getsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &optionLen);
-    cout << "송신 버퍼 크기 : " << sendBufferSize << endl;
+    if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+        return 0;
 
-    int32 recvBufferSize;
-    optionLen = sizeof(sendBufferSize);
-    ::getsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufferSize, &optionLen);
-    cout << "수신 버퍼 크기 : " << recvBufferSize << endl;
+    if (::listen(listenSocket, SOMAXCONN) == SOCKET_ERROR)
+        return 0;
 
-    // SO_REUSEADDR: 이 옵션을 사용하면 소켓이 동일한 주소와 포트 번호를 재사용할 수 있습니다.
+    cout << "Accept" << endl;
+
+    SOCKADDR_IN clientAddr;
+    int32 addrLen = sizeof(clientAddr);
+
+    // 클라이언트의 접속을 계속해서 수락합니다.
+    while (true)
     {
-        bool enable = true;
-        ::setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&enable, sizeof(enable));
+        SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
+        if (clientSocket == INVALID_SOCKET)
+        {
+            // accept 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
+            // 바로 다음 클라이언트의 접속을 수락하도록 continue합니다.
+            if (::WSAGetLastError() == WSAEWOULDBLOCK)
+                continue;
+
+            // 그 외 에러 발생 시 종료
+            break;
+        }
+
+        cout << "Client Connected!" << endl;
+
+        // 클라이언트로부터 데이터를 계속 수신합니다.
+        while (true)
+        {
+            char recvBuffer[1000];
+            int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
+            if (recvLen <= SOCKET_ERROR)
+            {
+                // recv 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
+                // 바로 다음 데이터를 수신하도록 continue합니다.
+                if (::WSAGetLastError() == WSAEWOULDBLOCK)
+                    continue;
+
+                // 그 외 에러 발생 시 종료
+                break;
+            }
+            else if (recvLen == 0)
+            {
+                // 클라이언트가 연결을 종료하면 종료합니다.
+                break;
+            }
+
+            cout << "Recv Data Len = " << recvLen << endl;
+
+            // 받은 데이터를 클라이언트에 다시 보냅니다. (에코)
+            while (true)
+            {
+                if (::send(clientSocket, recvBuffer, recvLen, 0) == SOCKET_ERROR)
+                {
+                    // send 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
+                    // 바로 다음 데이터를 전송하도록 continue합니다.
+                    if (::WSAGetLastError() == WSAEWOULDBLOCK)
+                        continue;
+
+                    // 그 외 에러 발생 시 종료
+                    break;
+                }
+                cout << "Send Data ! Len = " << recvLen << endl;
+                break;
+            }
+        }
     }
 
-    // TCP_NODELAY: 이 옵션은 Nagle 알고리즘을 활성화 또는 비활성화 합니다.
-   // Nagle 알고리즘은 데이터가 충분히 크면 보내고, 그렇지 않으면 데이터가 충분히 쌓일 때까지 대기합니다.
-   // 이 옵션을 true 설정하면 게임에서 빠른 반응 시간을 필요로 하는 경우(예를 들어 실시간 FPS 게임) 유용할 수 있습니다.
-   // 그러나, 이 옵션을 활성화하면 네트워크 상에서 작은 패킷이 불필요하게 많이 발생하는 것을 방지할 수 없습니다.
-    {
-        bool enable = true;
-        ::setsockopt(serverSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&enable, sizeof(enable));
-    }
-
-    // 소켓 통신을 마치면 윈속을 종료합니다.
+    // 모든 통신을 마친 후에는 윈속을 종료합니다.
     ::WSACleanup();
 }
