@@ -34,59 +34,44 @@ int main()
         return 0;
     }
 
-    // 서버 주소 설정. 여기서는 모든 IP로부터의 접속을 허용
-    SOCKADDR_IN serverAddr;
-    ::memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = ::htonl(INADDR_ANY);
-    serverAddr.sin_port = ::htons(7777);
+    // SO_KEEPALIVE: 이 옵션을 설정하면 TCP 연결의 상태가 주기적으로 확인됩니다.
+    // 예를 들어, 만약 상대방이 연결을 소리소문 없이 끊었다면 이 옵션을 통해 감지할 수 있습니다.
+    bool enable = true;
+    ::setsockopt(serverSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&enable, sizeof(enable));
 
-    // 소켓에 주소 바인딩. 실패하면 에러 메시지 출력 후 프로그램 종료
-    if (::bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+    // SO_LINGER: 이 옵션은 소켓을 닫을 때 아직 전송되지 않은 데이터가 있는 경우 어떻게 처리할지를 결정합니다.
+    // linger.l_onoff 가 0이면 closesocket()이 바로 리턴하고, 아니면 linger.l_linger 초 만큼 대기합니다. 
+    LINGER linger;
+    linger.l_onoff = 1;
+    linger.l_linger = 5;
+    ::setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(linger));
+
+    // SO_SNDBUF 및 SO_RCVBUF: 이들 옵션은 송신 및 수신 버퍼의 크기를 설정합니다.
+    int32 sendBufferSize;
+    int32 optionLen = sizeof(sendBufferSize);
+    ::getsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &optionLen);
+    cout << "송신 버퍼 크기 : " << sendBufferSize << endl;
+
+    int32 recvBufferSize;
+    optionLen = sizeof(sendBufferSize);
+    ::getsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufferSize, &optionLen);
+    cout << "수신 버퍼 크기 : " << recvBufferSize << endl;
+
+    // SO_REUSEADDR: 이 옵션을 사용하면 소켓이 동일한 주소와 포트 번호를 재사용할 수 있습니다.
     {
-        HandleError("Bind");
-        return 0;
+        bool enable = true;
+        ::setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&enable, sizeof(enable));
     }
 
-    while (true)
+    // TCP_NODELAY: 이 옵션은 Nagle 알고리즘을 활성화 또는 비활성화 합니다.
+   // Nagle 알고리즘은 데이터가 충분히 크면 보내고, 그렇지 않으면 데이터가 충분히 쌓일 때까지 대기합니다.
+   // 이 옵션을 true 설정하면 게임에서 빠른 반응 시간을 필요로 하는 경우(예를 들어 실시간 FPS 게임) 유용할 수 있습니다.
+   // 그러나, 이 옵션을 활성화하면 네트워크 상에서 작은 패킷이 불필요하게 많이 발생하는 것을 방지할 수 없습니다.
     {
-        // 클라이언트의 주소를 저장할 구조체
-        SOCKADDR_IN clientAddr;
-        ::memset(&clientAddr, 0, sizeof(clientAddr));
-        int32 addrLen = sizeof(clientAddr);
-
-        // recvBuffer는 클라이언트로부터 받은 데이터를 저장할 공간
-        char recvBuffer[1000];
-
-        // 클라이언트로부터 데이터를 받음. 받은 데이터는 recvBuffer에 저장되고, 데이터의 길이는 recvLen에 저장됨.
-        int32 recvLen = ::recvfrom(serverSocket, recvBuffer, sizeof(recvBuffer), 0,
-            (SOCKADDR*)&clientAddr, &addrLen);
-
-        // 데이터 수신이 실패하거나 클라이언트로부터 연결이 끊어진 경우 에러 처리
-        if (recvLen <= 0)
-        {
-            HandleError("RecvFrom");
-            return 0;
-        }
-
-        // 수신한 데이터와 데이터의 길이 출력
-        cout << "Recv Data! Data = " << recvBuffer << endl;
-        cout << "Recv Data! Len = " << recvLen << endl;
-        // 클라이언트에게 받은 데이터를 그대로 다시 보냄 (echo)
-        int32 errorCode = ::sendto(serverSocket, recvBuffer, recvLen, 0,
-            (SOCKADDR*)&clientAddr, sizeof(clientAddr));
-
-        // 데이터 전송이 실패한 경우 에러 처리
-        if (errorCode == SOCKET_ERROR)
-        {
-            HandleError("SendTo");
-            return 0;
-        }
-
-        // 전송한 데이터의 길이를 출력
-        cout << "Send Data! Len = " << recvLen << endl;
+        bool enable = true;
+        ::setsockopt(serverSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&enable, sizeof(enable));
     }
 
-    // 소켓 통신을 마치면 윈속을 종료
+    // 소켓 통신을 마치면 윈속을 종료합니다.
     ::WSACleanup();
 }
