@@ -15,30 +15,44 @@
 // 에러가 발생한 경우 에러 메시지와 에러 코드를 출력
 void HandleError(const char* cause)
 {
+    // 마지막으로 발생한 에러 코드를 가져옵니다.
     int32 errCode = ::WSAGetLastError();
+    // 에러 원인과 에러 코드를 출력합니다.
     cout << cause << " ErrorCode : " << errCode << endl;
 }
 
+const int32 BUFSIZE = 1000;
+
+struct Session
+{
+    // 클라이언트와 통신을 위한 소켓을 저장합니다.
+    SOCKET socket = INVALID_SOCKET;
+    // 데이터를 받을 버퍼입니다.
+    char recvBuffer[BUFSIZE] = {};
+    // 수신된 데이터의 크기를 저장합니다.
+    int32 recvBytes = 0;
+    // 보낸 데이터의 크기를 저장합니다.
+    int32 sendBytes = 0;
+};
+
 int main()
 {
-    // 윈속 초기화. 실패하면 0을 반환해 프로그램 종료
+    // Winsock을 초기화합니다. 실패 시 0을 반환하여 프로그램을 종료합니다.
     WSAData wsaData;
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return 0;
 
-    // 논블로킹(Non-Blocking)
-    
+    // 논블로킹 소켓을 생성합니다.
     SOCKET listenSocket = ::socket(AF_INET, SOCK_STREAM, 0);
     if (listenSocket == INVALID_SOCKET)
         return 0;
 
-    // 서버 소켓을 논-블로킹 모드로 설정
-    // 논-블로킹 모드에서는 소켓 함수 호출이 즉시 완료되지 않으면 WSAEWOULDBLOCK 에러를 반환합니다.
-    // 이를 통해 프로그램은 네트워크 연산을 기다리지 않고 다른 작업을 계속 수행할 수 있습니다.
+    // 서버 소켓을 논블로킹 모드로 설정합니다.
     u_long on = 1;
     if (::ioctlsocket(listenSocket, FIONBIO, &on) == INVALID_SOCKET)
         return 0;
 
+    // 서버 소켓을 바인딩합니다. 실패 시 0을 반환하여 프로그램을 종료합니다.
     SOCKADDR_IN serverAddr;
     ::memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
@@ -48,69 +62,87 @@ int main()
     if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
         return 0;
 
+    // 서버 소켓을 리스닝 상태로 만듭니다. 실패 시 0을 반환하여 프로그램을 종료합니다.
     if (::listen(listenSocket, SOMAXCONN) == SOCKET_ERROR)
         return 0;
 
     cout << "Accept" << endl;
 
-    SOCKADDR_IN clientAddr;
-    int32 addrLen = sizeof(clientAddr);
+    // 세션들을 저장할 벡터를 선언합니다.
+    vector<Session> sessions;
+    sessions.reserve(100);
 
-    // 클라이언트의 접속을 계속해서 수락합니다.
+    // select 함수를 사용하기 위한 fd_set 변수들을 선언합니다.
+    fd_set reads;
+    fd_set writes;
+
     while (true)
     {
-        SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
-        if (clientSocket == INVALID_SOCKET)
-        {
-            // accept 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
-            // 바로 다음 클라이언트의 접속을 수락하도록 continue합니다.
-            if (::WSAGetLastError() == WSAEWOULDBLOCK)
-                continue;
+        // fd_set 변수들을 초기화합니다.
+        FD_ZERO(&reads);
+        FD_ZERO(&writes);
 
-            // 그 외 에러 발생 시 종료
-            break;
+        // ListenSocket을 읽기 set에 등록합니다.
+        FD_SET(listenSocket, &reads);
+
+        // 세션의 소켓들을 읽기 혹은 쓰기 set에 등록합니다.
+        for (Session& s : sessions)
+        {
+            if (s.recvBytes <= s.sendBytes)
+                FD_SET(s.socket, &reads);
+            else
+                FD_SET(s.socket, &writes);
         }
 
-        cout << "Client Connected!" << endl;
+        // select 함수를 호출하여 등록된 소켓들 중 read 혹은 write 가능한 소켓이 있는지 확인합니다.
+        int32 retVal = ::select(0, &reads, &writes, nullptr, nullptr);
+        if (retVal == SOCKET_ERROR)
+            break;
 
-        // 클라이언트로부터 데이터를 계속 수신합니다.
-        while (true)
+        // ListenSocket을 체크하여 새로운 클라이언트가 접속했는지 확인합니다.
+        if (FD_ISSET(listenSocket, &reads))
         {
-            char recvBuffer[1000];
-            int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
-            if (recvLen <= SOCKET_ERROR)
+            SOCKADDR_IN clientAddr;
+            int32 addrLen = sizeof(clientAddr);
+            SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
+            if (clientSocket != INVALID_SOCKET)
             {
-                // recv 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
-                // 바로 다음 데이터를 수신하도록 continue합니다.
-                if (::WSAGetLastError() == WSAEWOULDBLOCK)
-                    continue;
-
-                // 그 외 에러 발생 시 종료
-                break;
+                cout << "Client Connected" << endl;
+                sessions.push_back(Session{ clientSocket });
             }
-            else if (recvLen == 0)
+        }
+        // 세션 소켓들을 체크하여 데이터가 읽기 혹은 쓰기 가능한 상태인지 확인합니다.
+        for (Session& s : sessions)
+        {
+            // Read
+            if (FD_ISSET(s.socket, &reads))
             {
-                // 클라이언트가 연결을 종료하면 종료합니다.
-                break;
-            }
-
-            cout << "Recv Data Len = " << recvLen << endl;
-
-            // 받은 데이터를 클라이언트에 다시 보냅니다. (에코)
-            while (true)
-            {
-                if (::send(clientSocket, recvBuffer, recvLen, 0) == SOCKET_ERROR)
+                int32 recvLen = ::recv(s.socket, s.recvBuffer, BUFSIZE, 0);
+                if (recvLen <= 0)
                 {
-                    // send 함수는 블로킹 함수지만, 우리는 논블로킹으로 처리하기 위해 WSAEWOULDBLOCK 에러가 발생했을 경우
-                    // 바로 다음 데이터를 전송하도록 continue합니다.
-                    if (::WSAGetLastError() == WSAEWOULDBLOCK)
-                        continue;
-
-                    // 그 외 에러 발생 시 종료
-                    break;
+                    // 데이터를 받지 못했거나 연결이 끊어진 경우 세션을 제거해야 합니다.
+                    continue;
                 }
-                cout << "Send Data ! Len = " << recvLen << endl;
-                break;
+                s.recvBytes = recvLen;
+            }
+
+            // Write
+            if (FD_ISSET(s.socket, &writes))
+            {
+                // 블로킹 모드 -> 모든 데이터 다 보냄
+                // 논블로킹 모드 -> 일부만 보낼 수가 있음(상대방 수신 버퍼 상황에 따라)
+                int32 sendLen = ::send(s.socket, &s.recvBuffer[s.sendBytes], s.recvBytes - s.sendBytes, 0);
+                if (sendLen == SOCKET_ERROR)
+                {
+                    // 데이터를 보내지 못했거나 연결이 끊어진 경우 세션을 제거해야 합니다.
+                    continue;
+                }
+                s.sendBytes += sendLen;
+                if (s.recvBytes == s.sendBytes)
+                {
+                    s.recvBytes = 0;
+                    s.sendBytes = 0;
+                }
             }
         }
     }
