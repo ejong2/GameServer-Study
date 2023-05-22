@@ -16,6 +16,8 @@ void HandleError(const char* cause)
 
 int main()
 {
+    this_thread::sleep_for(1s);
+
     // 윈속 초기화. 실패하면 0을 반환해 프로그램 종료
     WSAData wsaData;
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
