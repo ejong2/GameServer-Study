@@ -58,47 +58,39 @@ int main()
     cout << "Connected To Server!" << endl;
 
     char sendBuffer[100] = "Hello World";
+    WSAEVENT wsaEvent = ::WSACreateEvent(); // 비동기 I/O 작업 완료를 알리기 위한 이벤트를 생성합니다.
+    WSAOVERLAPPED overlapped = {}; // Overlapped I/O 작업을 위한 WSAOVERLAPPED 구조체 생성.
+    overlapped.hEvent = wsaEvent; // 생성한 이벤트를 Overlapped 구조체의 hEvent 멤버에 연결합니다. 이 이벤트는 비동기 I/O 작업이 완료될 때 시그널 상태로 설정됩니다.
 
     // 서버에 메시지 전송
     while (true)
     {
-        if (::send(clientSocket, sendBuffer, sizeof(sendBuffer), 0) == SOCKET_ERROR)
-        {
-            // 송신이 블로킹 상태일 경우 논블로킹으로 변경하여 계속 송신 시도
-            if (::WSAGetLastError() == WSAEWOULDBLOCK)
-                continue;
+        WSABUF wsaBuf;
+        wsaBuf.buf = sendBuffer;
+        wsaBuf.len = 100;
 
-            // 그 외의 에러 발생시 종료
-            break;
+        DWORD sendLen = 0;
+        DWORD flags = 0;
+        if (::WSASend(clientSocket, &wsaBuf, 1, &sendLen, flags, &overlapped, nullptr))
+        {
+            if (::WSAGetLastError() == WSA_IO_PENDING) // 비동기 I/O 작업이 즉시 완료되지 않았지만, 정상적으로 시작되었다는 것을 의미합니다.
+            {
+                // 이벤트가 시그널 상태가 될 때까지 대기합니다. 이 함수는 비동기 I/O 작업이 완료되기를 기다립니다.
+                ::WSAWaitForMultipleEvents(1, &wsaEvent, TRUE, WSA_INFINITE, FALSE);
+                // Overlapped I/O 작업이 완료된 후에 해당 작업의 결과를 확인합니다.
+                ::WSAGetOverlappedResult(clientSocket, &overlapped, &sendLen, FALSE, &flags);
+            }
+            else
+            {
+                // 진짜 문제 있는 상황
+                break;
+            }
         }
+
         cout << "Send Data ! Len = " << sizeof(sendBuffer) << endl;
-
-        // 서버로부터의 응답을 수신
-        while (true)
-        {
-            char recvBuffer[1000];
-            int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
-            if (recvLen <= SOCKET_ERROR)
-            {
-                // 수신이 블로킹 상태일 경우 논블로킹으로 변경하여 계속 수신 시도
-                if (::WSAGetLastError() == WSAEWOULDBLOCK)
-                    continue;
-
-                // 그 외의 에러 발생시 종료
-                break;
-            }
-            else if (recvLen == 0)
-            {
-                // 서버와의 연결이 끊어진 경우
-                break;
-            }
-            cout << "Recv Data Len = " << recvLen << endl;
-            break;
-        }
 
         this_thread::sleep_for(1s);
     }
-
     ::closesocket(clientSocket);
 
     // 윈속 종료
