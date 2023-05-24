@@ -42,7 +42,7 @@ bool SocketUtils::BindWindowsFunction(SOCKET socket, GUID guid, LPVOID* fn)
 
 // CreateSocket 메서드에서는 WSASocket을 호출하여 새로운 소켓을 생성합니다.
 SOCKET SocketUtils::CreateSocket()
-{
+{ 
 	return ::WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
