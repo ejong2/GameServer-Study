@@ -5,7 +5,7 @@
      iocpEvent
 ------------------*/
 
-IocpEvent::IocpEvent(EventType type) : _type(type)
+IocpEvent::IocpEvent(EventType type) : eventType(type)
 {
     // 이벤트 초기화
     Init();
