@@ -2,7 +2,7 @@
 
 #include "Types.h"
 #include "CoreMacro.h"
-#include "CoreTls.h"
+#include "CoreTLS.h"
 #include "CoreGlobal.h"
 #include "Container.h"
 
