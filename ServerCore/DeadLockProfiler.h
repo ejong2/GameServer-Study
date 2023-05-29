@@ -27,7 +27,6 @@ private:
     unordered_map<int32, const char*>	_idToName;
 
     // 현재 획득한 락들을 저장하는 스택입니다.
-    stack<int32>						_lockStack;
 
     // 락들 간의 획득 순서를 기록하는 맵입니다.
     map<int32, set<int32>>				_lockHistroy;
