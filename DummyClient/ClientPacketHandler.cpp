@@ -15,11 +15,9 @@ void ClientPacketHandler::HandlePacket(BYTE* buffer, int32 len)
             Handle_S_TEST(buffer, len);
             break;
     }
-
 }
 
 // 패킷 설계 TEMP
-
 struct BuffData
 {
     uint64 buffId;
@@ -31,12 +29,13 @@ struct S_TEST
     uint64 id;
     uint32 hp;
     uint16 attack;
-
     // 가변 데이터
-    // 1) 문자열 (ex, name)
-    // 2) 그냥 바이트 배열 (ex, 길드 이미지)
+    // 1) 문자열 (ex. name)
+    // 2) 그냥 바이트 배열 (ex. 길드 이미지)
     // 3) 일반 리스트
     vector<BuffData> buffs;
+
+    wstring name;
 };
 
 void ClientPacketHandler::Handle_S_TEST(BYTE* buffer, int32 len)
@@ -49,7 +48,6 @@ void ClientPacketHandler::Handle_S_TEST(BYTE* buffer, int32 len)
     uint64 id;
     uint32 hp;
     uint16 attack;
-
     br >> id >> hp >> attack;
 
     cout << "ID: " << id << " HP : " << hp << " ATT : " << attack << endl;
@@ -67,6 +65,16 @@ void ClientPacketHandler::Handle_S_TEST(BYTE* buffer, int32 len)
     cout << "BufCount : " << buffCount << endl;
     for (int32 i = 0; i < buffCount; i++)
     {
-        cout << "BufInfo : " << buffs[i].buffId << " RemainTime : " << buffs[i].remainTime << endl;
+        cout << "BufInfo : " << buffs[i].buffId << " " << buffs[i].remainTime << endl;
     }
+
+    wstring name;
+    uint16 nameLen;
+    br >> nameLen;
+    name.resize(nameLen);
+
+    br.Read((void*)name.data(), nameLen * sizeof(WCHAR));
+
+    wcout.imbue(std::locale("kor"));
+    wcout << name << endl;
 }

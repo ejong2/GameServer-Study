@@ -2,8 +2,7 @@
 
 enum
 {
-    S_TEST = 1,
-
+    S_TEST = 1
 };
 
 class ClientPacketHandler
