@@ -3,7 +3,7 @@
 #include "Service.h"
 #include "Session.h"
 #include "BufferReader.h"
-#include "ClientPacketHandler.h"
+#include "ServerPacketHandler.h"
 
 char sendData[] = "Hello World";
 
@@ -12,6 +12,8 @@ class ServerSession : public PacketSession
 public:
     ~ServerSession()
     {
+
+
         cout << "~ServerSession" << endl;
     }
 
@@ -22,9 +24,11 @@ public:
 
     virtual void OnRecvPacket(BYTE* buffer, int32 len) override
     {
-        ClientPacketHandler::HandlePacket(buffer, len);
+        PacketSessionRef session = GetPacketSessionRef();
+        PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 
-
+        // TODO : packetId 대역 체크
+        ServerPacketHandler::HandlePacket(session, buffer, len);
     }
 
     virtual void OnSend(int32 len) override
@@ -40,13 +44,15 @@ public:
 
 int main()
 {
+    ServerPacketHandler::Init();
+
     this_thread::sleep_for(1s);
 
     ClientServiceRef service = MakeShared<ClientService>(
         NetAddress(L"127.0.0.1", 7777),
         MakeShared<IocpCore>(),
         MakeShared<ServerSession>, // TODO : SessionManager 등
-        1000);
+        1);
 
     ASSERT_CRASH(service->Start());
 
