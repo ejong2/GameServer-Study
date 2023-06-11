@@ -58,6 +58,8 @@ class FileGenerator {
   void GenerateSource(io::Printer* printer);
   void GenerateHeader(io::Printer* printer);
 
+  const std::string& RootClassName() const { return root_class_name_; }
+
  private:
   const FileDescriptor* file_;
   std::string root_class_name_;

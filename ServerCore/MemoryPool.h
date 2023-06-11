@@ -13,7 +13,7 @@ DECLSPEC_ALIGN(SLIST_ALIGNMENT)
 struct MemoryHeader : public SLIST_ENTRY
 {
 	// [MemoryHeader][Data]
-	MemoryHeader(int32 size) : allocSize(size) {}
+	MemoryHeader(int32 size) : allocSize(size) { }
 
 	static void* AttachHeader(MemoryHeader* header, int32 size)
 	{
@@ -43,7 +43,7 @@ public:
 	~MemoryPool();
 
 	void			Push(MemoryHeader* ptr);
-	MemoryHeader* Pop();
+	MemoryHeader*	Pop();
 
 private:
 	SLIST_HEADER	_header;

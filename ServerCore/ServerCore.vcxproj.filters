@@ -2,19 +2,19 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Network">
-      <UniqueIdentifier>{bd2399d5-61b7-4354-b2fb-2ec799f0986c}</UniqueIdentifier>
+      <UniqueIdentifier>{44015ff7-f5fe-4ecb-9510-ba792e92d6c2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utils">
-      <UniqueIdentifier>{c3672009-a0e1-4058-9957-4d51017150d1}</UniqueIdentifier>
+      <UniqueIdentifier>{1c94faf8-d38f-44b3-b3f3-39ba3c6951e1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Main">
-      <UniqueIdentifier>{30867afb-abbb-4374-94dd-c31a559e280e}</UniqueIdentifier>
+      <UniqueIdentifier>{c0b75513-7471-4500-a833-2626c5040f9c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Thread">
-      <UniqueIdentifier>{210f4a23-e7d3-4d07-9504-706d8b4974db}</UniqueIdentifier>
+      <UniqueIdentifier>{0a8a1a96-3bcc-4f5b-ac25-3388457fad31}</UniqueIdentifier>
     </Filter>
     <Filter Include="Memory">
-      <UniqueIdentifier>{dde275c3-49c9-4762-b049-0be7be1a8abb}</UniqueIdentifier>
+      <UniqueIdentifier>{903143c9-12f7-436d-8004-490b4f0d31bf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -33,7 +33,7 @@
     <ClInclude Include="CoreGlobal.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="CoreTls.h">
+    <ClInclude Include="CoreTLS.h">
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="ThreadManager.h">
@@ -66,10 +66,10 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="SocketUtils.h">
+    <ClInclude Include="NetAddress.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="NetAddress.h">
+    <ClInclude Include="SocketUtils.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="IocpCore.h">
@@ -81,10 +81,10 @@
     <ClInclude Include="Listener.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Service.h">
+    <ClInclude Include="Session.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Session.h">
+    <ClInclude Include="Service.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="RecvBuffer.h">
@@ -93,8 +93,12 @@
     <ClInclude Include="SendBuffer.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="BufferReader.h" />
-    <ClInclude Include="BufferWriter.h" />
+    <ClInclude Include="BufferWriter.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferReader.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CorePch.cpp">
@@ -106,7 +110,7 @@
     <ClCompile Include="CoreGlobal.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="CoreTls.cpp">
+    <ClCompile Include="CoreTLS.cpp">
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ThreadManager.cpp">
@@ -130,13 +134,10 @@
     <ClCompile Include="MemoryPool.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
-    <ClCompile Include="TypeCast.cpp">
-      <Filter>Memory</Filter>
-    </ClCompile>
-    <ClCompile Include="SocketUtils.cpp">
+    <ClCompile Include="NetAddress.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="NetAddress.cpp">
+    <ClCompile Include="SocketUtils.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="IocpCore.cpp">
@@ -148,10 +149,10 @@
     <ClCompile Include="Listener.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Service.cpp">
+    <ClCompile Include="Session.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Session.cpp">
+    <ClCompile Include="Service.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="RecvBuffer.cpp">
@@ -160,7 +161,11 @@
     <ClCompile Include="SendBuffer.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="BufferReader.cpp" />
-    <ClCompile Include="BufferWriter.cpp" />
+    <ClCompile Include="BufferReader.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferWriter.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

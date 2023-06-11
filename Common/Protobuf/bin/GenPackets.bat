@@ -8,13 +8,13 @@ GenPackets.exe --path=./Protocol.proto --output=ServerPacketHandler --recv=S_ --
 
 IF ERRORLEVEL 1 PAUSE
 
-XCOPY /Y Enum.pb.h "../../../GameServer-Study"
-XCOPY /Y Enum.pb.cc "../../../GameServer-Study"
-XCOPY /Y Struct.pb.h "../../../GameServer-Study"
-XCOPY /Y Struct.pb.cc "../../../GameServer-Study"
-XCOPY /Y Protocol.pb.h "../../../GameServer-Study"
-XCOPY /Y Protocol.pb.cc "../../../GameServer-Study"
-XCOPY /Y ClientPacketHandler.h "../../../GameServer-Study"
+XCOPY /Y Enum.pb.h "../../../GameServer"
+XCOPY /Y Enum.pb.cc "../../../GameServer"
+XCOPY /Y Struct.pb.h "../../../GameServer"
+XCOPY /Y Struct.pb.cc "../../../GameServer"
+XCOPY /Y Protocol.pb.h "../../../GameServer"
+XCOPY /Y Protocol.pb.cc "../../../GameServer"
+XCOPY /Y ClientPacketHandler.h "../../../GameServer"
 
 XCOPY /Y Enum.pb.h "../../../DummyClient"
 XCOPY /Y Enum.pb.cc "../../../DummyClient"

@@ -79,7 +79,6 @@ class SendEvent : public IocpEvent
 {
 public:
 	SendEvent() : IocpEvent(EventType::Send) { }
-
-	// TEMP
+	 
 	Vector<SendBufferRef> sendBuffers;
 };
