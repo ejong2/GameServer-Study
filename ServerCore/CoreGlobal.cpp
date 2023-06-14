@@ -11,6 +11,7 @@ ThreadManager*		GThreadManager = nullptr;
 Memory*				GMemory = nullptr;
 SendBufferManager*	GSendBufferManager = nullptr;
 GlobalQueue*		GGlobalQueue = nullptr;
+
 DeadLockProfiler*	GDeadLockProfiler = nullptr;
 
 class CoreGlobal
