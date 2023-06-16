@@ -22,9 +22,6 @@
     <Filter Include="DB">
       <UniqueIdentifier>{7f55a836-dbe4-49fe-b98f-01ba93752f74}</UniqueIdentifier>
     </Filter>
-    <Filter Include="TDB">
-      <UniqueIdentifier>{2792c5e3-6232-4b30-bdd9-12abbfd92cc4}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CorePch.h">
@@ -129,6 +126,9 @@
     <ClInclude Include="DBConnectionPool.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DBBind.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CorePch.cpp">
@@ -216,6 +216,9 @@
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="DBConnectionPool.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DBBind.cpp">
       <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>
